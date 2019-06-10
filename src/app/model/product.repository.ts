@@ -1,13 +1,13 @@
 import {Injectable} from '@angular/core';
 import {Product} from './product.model';
-import {StaticDatasource} from './static.datasource';
+import {RestDatasource} from './rest.datasource';
 
 @Injectable()
 export class ProductRepository {
   private products: Product[] = [];
   private categories: string[] = [];
 
-  constructor(private dataSource: StaticDatasource) {
+  constructor(private dataSource: RestDatasource) {
     dataSource.getProducts().subscribe(data => {
       this.products = data;
       this.categories = data
@@ -23,10 +23,27 @@ export class ProductRepository {
   }
 
   getProduct(id: number): Product {
-    return this.products.find(p => p.id === id);
+    return this.products.find(p => p.id == id);
   }
 
   getCategories(): string[] {
     return this.categories;
+  }
+
+  saveProduct(product: Product) {
+    if (product.id == null || product.id === 0) {
+      this.dataSource.saveProduct(product)
+        .subscribe(p => this.products.push(p));
+    } else {
+      this.dataSource.updateProduct(product).subscribe(p => {
+        this.products.splice(this.products.findIndex(prod => prod.id === product.id), 1, product);
+      });
+    }
+  }
+
+  deleteProduct(id: number) {
+    this.dataSource.deleteProduct(id).subscribe(prod => {
+      this.products.splice(this.products.findIndex(p => p.id === id), 1);
+    });
   }
 }
